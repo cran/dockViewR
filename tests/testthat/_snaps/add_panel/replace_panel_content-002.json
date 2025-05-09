@@ -1,0 +1,9 @@
+{
+  "input": {
+    "dist": "norm",
+    "obs": 500
+  },
+  "export": {
+    "n_panels": 2
+  }
+}

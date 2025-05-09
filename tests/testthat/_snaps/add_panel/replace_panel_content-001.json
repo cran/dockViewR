@@ -1,0 +1,8 @@
+{
+  "input": {
+    "obs": 500
+  },
+  "export": {
+    "n_panels": 1
+  }
+}
