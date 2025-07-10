@@ -11,6 +11,9 @@
 #' \url{https://dockview.dev/docs/api/dockview/options/}.
 #' @param theme Theme. One of
 #' \code{c("abyss", "dark", "light", "vs", "dracula", "replit")}.
+#' @param add_tab Globally controls the add tab behavior. List with enable and callback.
+#' Enable is a boolean, default to FALSE and callback is a
+#' JavaScript function passed with \link[htmlwidgets]{JS}.
 #' @param width Widget width.
 #' @param height Widget height.
 #' @param elementId When used outside Shiny.
@@ -96,6 +99,7 @@ dock_view <- function(
     "dracula",
     "replit"
   ),
+  add_tab = list(enable = FALSE, callback = NULL),
   width = NULL,
   height = NULL,
   elementId = NULL
@@ -109,10 +113,71 @@ dock_view <- function(
   # check reference panels ids
   check_panel_refs(panels, ids)
 
+  if (add_tab$enable) {
+    if (is.null(add_tab$callback)) {
+      add_tab$callback <- JS(
+        "(config) => {
+          const addPanel = (panel, api) => {
+            let internals = {
+              component: 'default',
+              params: {
+                content: panel.content,
+                addTab: panel.addTab
+              }
+            }
+
+            // Disable tab removal.
+            //internals.tabComponent = 'custom';
+            // You can use manual removal.
+            //internals.tabComponent = 'manual';
+            let props = { ...panel, ...internals }
+            return (api.addPanel(props))
+          }
+          const defaultPanel = (pnId) => {
+            return (`
+              <p>Exchange me by running:</p>
+              <p>removeUI(<br>
+                &nbsp;&nbsp;selector = \"#${pnId} > *\",<br>
+                &nbsp;&nbsp;multiple = TRUE<br>
+              )</p>
+              <p>shiny::insertUI(<br>
+                    &nbsp;&nbsp;selector = \"#${pnId}\",<br>
+                    &nbsp;&nbsp;where = \"beforeEnd\",<br>
+                    &nbsp;&nbsp;ui = \"your ui code here\"<br>
+              )</p>
+            `)
+          }
+          const dockId = config.containerApi.component
+            .gridview.element.closest('.dockview')
+            .attributes.id.textContent;
+          const pnId = `panel-${Date.now()}`
+          addPanel({
+            id: pnId,
+            title: 'Panel new',
+            inactive: false,
+            content: {
+              head: '',
+              singletons: [],
+              dependencies: [],
+              html: defaultPanel(dockId + '-' + pnId)
+            },
+            position: { referenceGroup: config.group.id, direction: 'within' }
+          }, config.containerApi);
+        }"
+      )
+    } else {
+      if (!is_js(add_tab$callback)) {
+        stop("`callback` must be a JavaScript function.")
+      }
+    }
+  }
+
   # forward options using x
   x <- list(
     theme = theme,
     panels = panels,
+    # camelCase for JS ...
+    addTab = add_tab,
     ...
   )
 
@@ -153,6 +218,12 @@ dock_view <- function(
 #' @param title Panel title.
 #' @param content Panel content. Can be a list of Shiny tags.
 #' @param active Is active?
+#' @param remove List with two fields: enable and mode. Enable is a boolean
+#' and mode is one of `manual`, `auto` (default to auto). In auto mode,
+#' dockview JS removes the panel when it is closed and all its content. If you
+#' need more control over the panel removal, set it to manual so you can explicitly
+#' call `remove_panel()` and perform other tasks. On the server side, a shiny input is available
+#' `input[["<dock_ID>_panel-to-remove"]]` so you can create observers with custom logic.
 #' @param ... Other options passed to the API.
 #' See \url{https://dockview.dev/docs/api/dockview/panelApi/}.
 #' If you pass position, it must be a list with 2 fields:
@@ -171,7 +242,14 @@ dock_view <- function(
 #' - ...: extra parameters to pass to the API.
 #'
 #' @export
-panel <- function(id, title, content, active = TRUE, ...) {
+panel <- function(
+  id,
+  title,
+  content,
+  active = TRUE,
+  remove = list(enable = FALSE, mode = "auto"),
+  ...
+) {
   # We can't check id uniqueness here because panel has no
   # idea of other existing panel ids at that point.
   id <- as.character(id)
@@ -180,6 +258,7 @@ panel <- function(id, title, content, active = TRUE, ...) {
     id = id,
     title = title,
     inactive = !active,
+    remove = remove,
     content = htmltools::renderTags(content)
   )
 
@@ -240,10 +319,40 @@ renderDockView <- function(expr, env = parent.frame(), quoted = FALSE) {
   if (!quoted) {
     expr <- substitute(expr)
   } # force quoted
-  htmlwidgets::shinyRenderWidget(expr, dockViewOutput, env, quoted = TRUE)
+  htmlwidgets::shinyRenderWidget(
+    expr,
+    dockViewOutput,
+    env,
+    quoted = TRUE
+  )
 } #nocov end
 
 #' Alias to \link{renderDockView}
 #' @export
 #' @rdname dock_view-shiny
 render_dock_view <- renderDockView
+
+#' Update options for dockview instance
+#'
+#' This does not rerender the widget, just update options like global theme.
+#'
+#' @param dock_id The id of the dock view widget to update.
+#' @param options List of options for the \link{dock_view} instance.
+#' @param session Shiny session object.
+#' @return This function is called for its side effect.
+#' It sends a message to JavaScript through the current websocket connection,
+#' leveraging the shiny session object.
+#' @export
+update_dock_view <- function(
+  dock_id,
+  options,
+  session = getDefaultReactiveDomain()
+) {
+  if (is.null(session)) {
+    stop("`session` must be a valid Shiny session object.")
+  }
+  session$sendCustomMessage(
+    type = sprintf("%s_update-options", session$ns(dock_id)),
+    message = options
+  )
+}

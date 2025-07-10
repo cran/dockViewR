@@ -9,6 +9,7 @@ dock_view(
   ...,
   theme = c("light-spaced", "light", "abyss", "abyss-spaced", "dark", "vs", "dracula",
     "replit"),
+  add_tab = list(enable = FALSE, callback = NULL),
   width = NULL,
   height = NULL,
   elementId = NULL
@@ -22,6 +23,10 @@ dock_view(
 
 \item{theme}{Theme. One of
 \code{c("abyss", "dark", "light", "vs", "dracula", "replit")}.}
+
+\item{add_tab}{Globally controls the add tab behavior. List with enable and callback.
+Enable is a boolean, default to FALSE and callback is a
+JavaScript function passed with \link[htmlwidgets]{JS}.}
 
 \item{width}{Widget width.}
 
