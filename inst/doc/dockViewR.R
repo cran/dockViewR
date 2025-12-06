@@ -200,37 +200,3 @@ shiny::tags$iframe(
   height = "900px"
 )
 
-
-## ----replace_panel_content, eval=FALSE, echo = FALSE--------------------------
-# library(dockViewR)
-# shinyAppDir(system.file(
-#   "examples/replace_panel_content",
-#   package = "dockViewR"
-# ))
-
-
-## ----results="asis", echo=FALSE, warning=FALSE, comment = ""------------------
-dockViewR:::print_r_code("examples/replace_panel_content/app.R")
-
-
-## ----replace_panel_content_url, echo = FALSE, results = 'asis'----------------
-# extract the code from knitr code chunks by ID
-code <- paste0(
-  c(
-    "webr::install(\"dockViewR\", repos = \"https://rinterface.github.io/rinterface-wasm-cran/\")",
-    knitr::knit_code$get("replace_panel_content")
-  ),
-  collapse = "\n"
-)
-
-url <- roxy.shinylive::create_shinylive_url(code, header = FALSE)
-
-
-## ----replace_panel_content_iframe, echo = FALSE, eval = TRUE------------------
-shiny::tags$iframe(
-  class = "border border-5 rounded shadow-lg",
-  src = url,
-  width = "125%",
-  height = "900px"
-)
-

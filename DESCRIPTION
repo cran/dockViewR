@@ -1,6 +1,6 @@
 Package: dockViewR
 Title: Layout Manager Widget for R and 'shiny' Apps
-Version: 0.2.0
+Version: 0.3.0
 Authors@R: 
     c(
     person("David", "Granjon", , "dgranjon@ymail.com", role = c("aut", "cre")),
@@ -16,10 +16,11 @@ Description: Provides R bindings to the 'dockview' 'JavaScript' library <https:/
     serialise the state of a dock to restore it later.
 License: MIT + file LICENSE
 Encoding: UTF-8
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Imports: htmlwidgets, htmltools, shiny
 Suggests: knitr, rmarkdown, roxy.shinylive, shinytest2, testthat (>=
-        3.0.0), visNetwork, quarto, thematic
+        3.0.0), visNetwork, quarto, thematic, listviewer, jsonlite,
+        withr
 URL: https://github.com/cynkra/dockViewR,
         https://cynkra.github.io/dockViewR/
 BugReports: https://github.com/cynkra/dockViewR/issues
@@ -27,7 +28,7 @@ Config/testthat/edition: 3
 Depends: R (>= 2.10)
 VignetteBuilder: quarto
 NeedsCompilation: no
-Packaged: 2025-07-10 14:57:20 UTC; davidgranjon
+Packaged: 2025-12-05 10:47:34 UTC; davidgranjon
 Author: David Granjon [aut, cre],
   Nelson Stevens [aut],
   Nicolas Bennett [aut],
@@ -35,4 +36,4 @@ Author: David Granjon [aut, cre],
   cynkra GmbH [fnd]
 Maintainer: David Granjon <dgranjon@ymail.com>
 Repository: CRAN
-Date/Publication: 2025-07-10 15:10:07 UTC
+Date/Publication: 2025-12-06 11:40:08 UTC
